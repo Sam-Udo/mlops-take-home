@@ -1,0 +1,5 @@
+payment_id,fraud_type,fraud_reported_date
+PAY006,authorized_push_payment,2025-01-05
+PAY008,account_takeover,2025-01-10
+PAY011,money_mule,2024-12-20
+PAY015,authorized_push_payment,2025-01-08
