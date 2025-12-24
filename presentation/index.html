@@ -470,45 +470,52 @@
             <!-- Slide 7: The Three Layers -->
             <section>
                 <h2>Three layers, three purposes</h2>
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <div class="diagram bronze">
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <div class="diagram bronze" style="padding: 8px;">
                         <strong style="color: #cd7f32;">Bronze — Raw Storage</strong><br>
-                        <span class="subtle">Dump everything here. Don't transform. Don't filter. If upstream breaks, we still have the data.</span><br>
-                        <span class="tag">Parquet files</span> <span class="tag">Partitioned by date</span> <span class="tag">Immutable</span>
+                        <span style="font-size: 0.75em; color: #71717a;">Dump everything. Don't transform. Keep everything if upstream breaks.</span>
                     </div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="diagram silver">
+                    <div class="flow-arrow" style="margin: 2px 0;">↓</div>
+                    <div class="diagram silver" style="padding: 8px;">
                         <strong style="color: #94a3b8;">Silver — Cleaned & Validated</strong><br>
-                        <span class="subtle">Deduplicate, coerce types, validate business rules. Bad records go to dead letter queue.</span><br>
-                        <span class="tag blue">Great Expectations</span> <span class="tag blue">Type coercion</span> <span class="tag blue">Referential checks</span>
+                        <span style="font-size: 0.75em; color: #71717a;">Deduplicate, coerce types, validate rules. Bad records → dead letter queue.</span>
                     </div>
-                    <div class="flow-arrow">↓</div>
-                    <div class="diagram gold">
+                    <div class="flow-arrow" style="margin: 2px 0;">↓</div>
+                    <div class="diagram gold" style="padding: 8px;">
                         <strong style="color: #fbbf24;">Gold — ML-Ready Features</strong><br>
-                        <span class="subtle">Join everything. Compute derived features. This is what data scientists query.</span><br>
-                        <span class="tag green">Unified table</span> <span class="tag green">Point-in-time correct</span> <span class="tag green">Daily refresh</span>
+                        <span style="font-size: 0.75em; color: #71717a;">Join everything. This is what data scientists query. Refreshes daily.</span>
                     </div>
                 </div>
+                <p class="subtle" style="margin-top: 12px; font-size: 0.8em;">Each layer protects the next: Bronze → data loss, Silver → quality issues, Gold → ML-ready output.</p>
             </section>
 
             <!-- Slide 8: The Unified Table Schema -->
             <section>
                 <h2>The actual schema</h2>
-                <p>Here's what the Gold layer unified table looks like. 13 columns, denormalized for fast ML queries:</p>
-                <table class="schema">
-                    <tr><th>Column</th><th>Type</th><th>Source</th><th>Why it matters</th></tr>
-                    <tr><td><code>payment_id</code></td><td>STRING</td><td>Payments</td><td>Primary key</td></tr>
-                    <tr><td><code>src_account_id</code></td><td>STRING</td><td>Payments</td><td>Who sent money</td></tr>
-                    <tr><td><code>dest_account_id</code></td><td>STRING</td><td>Payments</td><td>Who received it</td></tr>
-                    <tr><td><code>amount</code></td><td>DECIMAL</td><td>Payments</td><td>Transaction value</td></tr>
-                    <tr><td><code>timestamp</code></td><td>TIMESTAMP</td><td>Payments</td><td>When it happened</td></tr>
-                    <tr><td><code>src_opening_date</code></td><td>DATE</td><td>Accounts</td><td>For "account age" features</td></tr>
-                    <tr><td><code>dest_opening_date</code></td><td>DATE</td><td>Accounts</td><td>New accounts = higher risk</td></tr>
-                    <tr><td><code>src_risk_flag</code></td><td>INT</td><td>Risk Feed</td><td>External risk signal (0-5)</td></tr>
-                    <tr><td><code>dest_risk_flag</code></td><td>INT</td><td>Risk Feed</td><td>Receiver risk profile</td></tr>
-                    <tr><td><code>fraud_flag</code></td><td>BOOLEAN</td><td>Fraud Labels</td><td>The target variable</td></tr>
-                    <tr><td><code>fraud_type</code></td><td>STRING</td><td>Fraud Labels</td><td>Classification of fraud</td></tr>
-                </table>
+                <p style="font-size: 0.85em;">13 columns total, denormalized for fast ML queries:</p>
+                <div class="two-col" style="gap: 16px; margin-top: 8px;">
+                    <div>
+                        <h3 style="font-size: 0.9em;">From Payments (base table)</h3>
+                        <p style="font-size: 0.7em; color: #a1a1aa; margin: 4px 0;"><code>payment_id</code> • <code>src_account_id</code> • <code>dest_account_id</code></p>
+                        <p style="font-size: 0.7em; color: #a1a1aa; margin: 4px 0;"><code>amount</code> • <code>timestamp</code> • <code>payment_reference</code></p>
+                        
+                        <h3 style="font-size: 0.9em; margin-top: 12px;">From Accounts (joined twice)</h3>
+                        <p style="font-size: 0.7em; color: #a1a1aa; margin: 4px 0;"><code>src_opening_date</code> • <code>dest_opening_date</code></p>
+                        <p style="font-size: 0.65em; color: #71717a;">For computing "account age" features</p>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 0.9em;">From Risk Feed</h3>
+                        <p style="font-size: 0.7em; color: #a1a1aa; margin: 4px 0;"><code>src_risk_flag</code> • <code>dest_risk_flag</code></p>
+                        <p style="font-size: 0.65em; color: #71717a;">External risk signal (0-5 scale)</p>
+                        
+                        <h3 style="font-size: 0.9em; margin-top: 12px;">From Fraud Labels</h3>
+                        <p style="font-size: 0.7em; color: #a1a1aa; margin: 4px 0;"><code>fraud_flag</code> • <code>fraud_type</code> • <code>fraud_reported_date</code></p>
+                        <p style="font-size: 0.65em; color: #71717a;">Target variable + when we learned about it</p>
+                    </div>
+                </div>
+                <div class="callout" style="margin-top: 12px; padding: 8px 12px;">
+                    <strong>Why denormalized?</strong> Data scientists can <code>SELECT * FROM unified_table</code> and start training immediately.
+                </div>
             </section>
 
             <!-- Slide 9: Join Strategy -->
@@ -535,121 +542,116 @@ FROM payments p
             <!-- Slide 10: Data Quality - Three Layers -->
             <section>
                 <h2>Data quality: defense in depth</h2>
-                <p>I don't trust upstream systems. Here's how we validate at each layer:</p>
-                <div class="three-col">
-                    <div class="card">
-                        <h4 style="color: #cd7f32;">Bronze Checks</h4>
-                        <p><strong>Goal:</strong> Did we receive data?</p>
-                        <ul class="clean" style="font-size: 0.8em;">
-                            <li>Schema matches expected</li>
-                            <li>Row count > 0</li>
-                            <li>No total file corruption</li>
-                        </ul>
-                        <p class="subtle">If this fails, alert immediately but don't block the pipeline.</p>
+                <p style="font-size: 0.85em;">I don't trust upstream systems. Here's how we validate:</p>
+                <div class="three-col" style="gap: 12px;">
+                    <div class="card" style="padding: 12px;">
+                        <h4 style="color: #cd7f32; font-size: 0.85em; margin-bottom: 4px;">Bronze</h4>
+                        <p style="font-size: 0.7em; margin-bottom: 6px;">Did we receive data?</p>
+                        <p style="font-size: 0.65em; color: #71717a; line-height: 1.3;">Schema matches • Row count > 0 • File not corrupt</p>
                     </div>
-                    <div class="card">
-                        <h4 style="color: #94a3b8;">Silver Checks</h4>
-                        <p><strong>Goal:</strong> Is the data sane?</p>
-                        <ul class="clean" style="font-size: 0.8em;">
-                            <li>payment_id is unique</li>
-                            <li>amount > 0</li>
-                            <li>>95% accounts exist</li>
-                        </ul>
-                        <p class="subtle">Bad records → dead letter queue for investigation.</p>
+                    <div class="card" style="padding: 12px;">
+                        <h4 style="color: #94a3b8; font-size: 0.85em; margin-bottom: 4px;">Silver</h4>
+                        <p style="font-size: 0.7em; margin-bottom: 6px;">Is the data sane?</p>
+                        <p style="font-size: 0.65em; color: #71717a; line-height: 1.3;">Unique IDs • amount > 0 • >95% accounts exist</p>
                     </div>
-                    <div class="card">
-                        <h4 style="color: #fbbf24;">Gold Checks</h4>
-                        <p><strong>Goal:</strong> Is ML quality okay?</p>
-                        <ul class="clean" style="font-size: 0.8em;">
-                            <li>Fraud rate within expected range</li>
-                            <li>Feature distributions stable</li>
-                            <li>No NULLs in critical fields</li>
-                        </ul>
-                        <p class="subtle">Drift alerts → data science reviews.</p>
+                    <div class="card" style="padding: 12px;">
+                        <h4 style="color: #fbbf24; font-size: 0.85em; margin-bottom: 4px;">Gold</h4>
+                        <p style="font-size: 0.7em; margin-bottom: 6px;">ML quality okay?</p>
+                        <p style="font-size: 0.65em; color: #71717a; line-height: 1.3;">Fraud rate in range • Distributions stable • No critical NULLs</p>
                     </div>
+                </div>
+                <div class="callout" style="margin-top: 12px; padding: 8px 12px;">
+                    <strong>Tool:</strong> Great Expectations — define expectations as code, version control them, detailed failure reports.
                 </div>
             </section>
 
             <!-- Slide 11: Monitoring -->
             <section>
-                <h2>Monitoring: what I actually track</h2>
-                <p>Prometheus + Grafana. Here are the metrics that matter:</p>
-                <div class="two-col">
+                <h2>Monitoring: what I track</h2>
+                <p style="font-size: 0.85em;">Prometheus + Grafana. The metrics that matter:</p>
+                <div class="two-col" style="gap: 16px;">
                     <div>
-                        <h3>Pipeline Health</h3>
-                        <ul class="clean">
-                            <li><code>pipeline_last_success_time</code> — is it running?</li>
-                            <li><code>bronze_row_count</code> — did we get data?</li>
-                            <li><code>silver_validation_pass_rate</code> — quality signal</li>
-                            <li><code>gold_freshness_hours</code> — how stale is the table?</li>
+                        <h3 style="font-size: 0.95em;">Pipeline Health</h3>
+                        <ul class="clean" style="font-size: 0.8em;">
+                            <li><code>pipeline_last_success_time</code></li>
+                            <li><code>bronze_row_count</code></li>
+                            <li><code>silver_validation_pass_rate</code></li>
+                            <li><code>gold_freshness_hours</code></li>
                         </ul>
                     </div>
                     <div>
-                        <h3>Alert Tiers</h3>
-                        <ul class="clean">
-                            <li><span style="color: #f87171;">P1:</span> Pipeline hasn't run in 4 hours</li>
-                            <li><span style="color: #f97316;">P2:</span> Validation rate < 90%</li>
-                            <li><span style="color: #fbbf24;">P3:</span> Schema change detected</li>
-                            <li><span style="color: #71717a;">Info:</span> Daily summary email</li>
+                        <h3 style="font-size: 0.95em;">Alert Tiers</h3>
+                        <ul class="clean" style="font-size: 0.8em;">
+                            <li><span style="color: #f87171;">P1:</span> No run in 4 hours</li>
+                            <li><span style="color: #f97316;">P2:</span> Validation < 90%</li>
+                            <li><span style="color: #fbbf24;">P3:</span> Schema change</li>
+                            <li><span style="color: #71717a;">Info:</span> Daily summary</li>
                         </ul>
                     </div>
                 </div>
-                <div class="callout">
-                    <strong>Schema fingerprinting:</strong> We hash column names + types. If the hash changes, something upstream changed without telling us. Automatic alert before the pipeline breaks.
+                <div class="callout" style="margin-top: 10px; padding: 8px 12px;">
+                    <strong>Schema fingerprinting:</strong> Hash column names + types. If hash changes → automatic alert before pipeline breaks.
                 </div>
             </section>
 
             <!-- Slide 12: Implementation Timeline -->
             <section>
                 <h2>Realistic 6-month plan</h2>
-                <p>Here's how I'd actually roll this out with a small team:</p>
-                <div class="timeline">
+                <p style="font-size: 0.85em;">Rolling this out with a 1-2 person team:</p>
+                <div class="timeline" style="margin: 16px 0;">
                     <div class="timeline-point">
-                        <div class="timeline-dot">1-2</div>
-                        <div class="timeline-label">Infra setup<br>Airflow, S3, basic DAGs</div>
+                        <div class="timeline-dot" style="width: 24px; height: 24px; font-size: 0.6em;">1-2</div>
+                        <div class="timeline-label" style="font-size: 0.5em;">Infra setup</div>
                     </div>
                     <div class="timeline-point">
-                        <div class="timeline-dot">3-4</div>
-                        <div class="timeline-label">Bronze layer<br>All sources landing</div>
+                        <div class="timeline-dot" style="width: 24px; height: 24px; font-size: 0.6em;">3-4</div>
+                        <div class="timeline-label" style="font-size: 0.5em;">Bronze layer</div>
                     </div>
                     <div class="timeline-point">
-                        <div class="timeline-dot">5-8</div>
-                        <div class="timeline-label">Silver + Gold<br>Unified table works</div>
+                        <div class="timeline-dot" style="width: 24px; height: 24px; font-size: 0.6em;">5-8</div>
+                        <div class="timeline-label" style="font-size: 0.5em;">Silver + Gold</div>
                     </div>
                     <div class="timeline-point">
-                        <div class="timeline-dot">9-16</div>
-                        <div class="timeline-label">Quality layer<br>Validation, alerts</div>
+                        <div class="timeline-dot" style="width: 24px; height: 24px; font-size: 0.6em;">9-16</div>
+                        <div class="timeline-label" style="font-size: 0.5em;">Quality layer</div>
                     </div>
                     <div class="timeline-point">
-                        <div class="timeline-dot">17-24</div>
-                        <div class="timeline-label">Polish<br>Docs, handoff</div>
+                        <div class="timeline-dot" style="width: 24px; height: 24px; font-size: 0.6em;">17-24</div>
+                        <div class="timeline-label" style="font-size: 0.5em;">Polish & docs</div>
                     </div>
                 </div>
-                <div class="callout insight">
-                    <strong>Key milestone:</strong> Data scientists can query the unified table by Week 8. Everything after that is making it production-grade and reliable.
+                <div class="two-col" style="gap: 16px; margin-top: 12px;">
+                    <div class="card" style="padding: 12px;">
+                        <h4 style="font-size: 0.85em; color: #4ade80;">Week 8 Milestone</h4>
+                        <p style="font-size: 0.7em;">Data scientists can query the unified table</p>
+                    </div>
+                    <div class="card" style="padding: 12px;">
+                        <h4 style="font-size: 0.85em; color: #fbbf24;">Week 24 Milestone</h4>
+                        <p style="font-size: 0.7em;">Production-grade, reliable, documented</p>
+                    </div>
                 </div>
             </section>
 
             <!-- Slide 13: Tech Stack -->
             <section>
                 <h2>Technology choices</h2>
-                <p>I'm optimizing for <span class="emphasis">"can 1-2 people actually run this"</span>, not resume-driven development.</p>
-                <div class="two-col">
+                <p style="font-size: 0.85em;">Optimizing for <span class="emphasis">"can 1-2 people run this"</span>, not resume-driven development.</p>
+                <div class="two-col" style="gap: 16px;">
                     <div>
-                        <h3 style="color: #4ade80;">Use now</h3>
-                        <p><span class="tag green">Airflow</span> Orchestration - boring but reliable</p>
-                        <p><span class="tag green">Spark</span> Processing - handles scale when needed</p>
-                        <p><span class="tag green">Parquet</span> Storage - columnar, efficient, readable</p>
-                        <p><span class="tag green">Great Expectations</span> Quality - Python-native validation</p>
-                        <p><span class="tag green">Prometheus/Grafana</span> Monitoring - industry standard</p>
+                        <h3 style="color: #4ade80; font-size: 0.95em;">Use now</h3>
+                        <p style="font-size: 0.75em;"><span class="tag green">Airflow</span> Orchestration</p>
+                        <p style="font-size: 0.75em;"><span class="tag green">Spark</span> Processing</p>
+                        <p style="font-size: 0.75em;"><span class="tag green">Parquet</span> Storage</p>
+                        <p style="font-size: 0.75em;"><span class="tag green">Great Expectations</span> Quality</p>
+                        <p style="font-size: 0.75em;"><span class="tag green">Prometheus</span> Monitoring</p>
                     </div>
                     <div>
-                        <h3 style="color: #71717a;">Skip for now</h3>
-                        <p><span class="tag" style="opacity: 0.5;">Kafka</span> Overkill for our volume</p>
-                        <p><span class="tag" style="opacity: 0.5;">Flink</span> Complex operational burden</p>
-                        <p><span class="tag" style="opacity: 0.5;">Feast</span> We don't need a feature store yet</p>
-                        <p><span class="tag" style="opacity: 0.5;">Delta Lake</span> Parquet is fine for now</p>
-                        <p class="subtle" style="margin-top: 16px;">These are Month 7+ decisions if volume 10x's.</p>
+                        <h3 style="color: #71717a; font-size: 0.95em;">Skip for now</h3>
+                        <p style="font-size: 0.75em;"><span class="tag" style="opacity: 0.5;">Kafka</span> Overkill</p>
+                        <p style="font-size: 0.75em;"><span class="tag" style="opacity: 0.5;">Flink</span> Complex ops</p>
+                        <p style="font-size: 0.75em;"><span class="tag" style="opacity: 0.5;">Feast</span> Not needed yet</p>
+                        <p style="font-size: 0.75em;"><span class="tag" style="opacity: 0.5;">Delta Lake</span> Parquet is fine</p>
+                        <p class="subtle" style="margin-top: 8px; font-size: 0.7em;">Month 7+ if volume 10x's</p>
                     </div>
                 </div>
             </section>
@@ -768,11 +770,11 @@ PAY015     | ACC105      | ACC212       | 12500.00  | 4        | True       | au
             <!-- Slide 20: Key Takeaways -->
             <section>
                 <h2>What I want you to remember</h2>
-                <div style="font-size: 1.1em; line-height: 1.8;">
-                    <p><span style="color: #f97316; font-weight: 600;">1.</span> <strong>Defensive design beats clever design.</strong> Bronze layer means you can recover from upstream disasters.</p>
-                    <p><span style="color: #f97316; font-weight: 600;">2.</span> <strong>Point-in-time correctness is non-negotiable.</strong> ML models that cheat with future data will fail in production.</p>
-                    <p><span style="color: #f97316; font-weight: 600;">3.</span> <strong>Right-size your tech stack.</strong> Kafka is cool. Running Kafka with 2 people is not cool.</p>
-                    <p><span style="color: #f97316; font-weight: 600;">4.</span> <strong>Ship early, iterate.</strong> Data scientists querying by Month 2 beats "perfect architecture" by Month 12.</p>
+                <div style="font-size: 0.95em; line-height: 1.6;">
+                    <p><span style="color: #f97316; font-weight: 600;">1.</span> <strong>Defensive design beats clever design.</strong><br><span style="color: #a1a1aa; font-size: 0.85em;">Bronze layer means you can recover from upstream disasters.</span></p>
+                    <p><span style="color: #f97316; font-weight: 600;">2.</span> <strong>Point-in-time correctness is non-negotiable.</strong><br><span style="color: #a1a1aa; font-size: 0.85em;">ML models that cheat with future data fail in production.</span></p>
+                    <p><span style="color: #f97316; font-weight: 600;">3.</span> <strong>Right-size your tech stack.</strong><br><span style="color: #a1a1aa; font-size: 0.85em;">Kafka is cool. Running Kafka with 2 people is not.</span></p>
+                    <p><span style="color: #f97316; font-weight: 600;">4.</span> <strong>Ship early, iterate.</strong><br><span style="color: #a1a1aa; font-size: 0.85em;">Querying by Month 2 beats "perfect" by Month 12.</span></p>
                 </div>
             </section>
 
@@ -801,11 +803,11 @@ PAY015     | ACC105      | ACC212       | 12500.00  | 4        | True       | au
             progress: true,
             controls: true,
             controlsTutorial: false,
-            width: 1100,
+            width: 1000,
             height: 700,
-            margin: 0.15,
+            margin: 0.1,
             minScale: 0.2,
-            maxScale: 1.5
+            maxScale: 2.0
         });
     </script>
 </body>
